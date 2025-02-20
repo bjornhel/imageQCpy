@@ -6,7 +6,7 @@ Calculation processes for the different tests.
 @author: Ellen Wasbø
 """
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
 import copy
 import warnings
@@ -252,7 +252,6 @@ def quicktest_output(input_main):
 
         for test in output_all_actual:
             output_subs = output_all_actual[test]
-
             res_pr_image = True
 
             # for each sub-output for current test
@@ -671,7 +670,7 @@ def calculate_qc(input_main, wid_auto=None,
                 if main_type in ['MainWindow', 'TaskBasedImageQualityDialog']:
                     try:
                         input_main.progress_modal.setLabelText(
-                            f'Reading/calculating image {i}/{n_img}')
+                            f'Reading image {i}/{n_img}')
                         input_main.progress_modal.setValue(
                              curr_progress_val + round(100 * i/n_analyse))
                     except AttributeError:
@@ -691,7 +690,8 @@ def calculate_qc(input_main, wid_auto=None,
                             tag_patterns=tag_patterns,
                             tag_infos=tag_infos, NM_count=NM_count[i],
                             get_window_level=any(auto_template_label),
-                            overlay=overlay
+                            overlay=overlay,
+                            rotate_k=input_main.gui.rotate_k
                             )
                         try:
                             if len(input_main.imgs[i].artifacts) > 0:
@@ -746,7 +746,8 @@ def calculate_qc(input_main, wid_auto=None,
                             tag_patterns=[group_pattern],
                             tag_infos=tag_infos,
                             get_window_level=any(auto_template_label),
-                            overlay=overlay
+                            overlay=overlay,
+                            rotate_k=input_main.gui.rotate_k
                             )
                         try:
                             if len(input_main.imgs[i].artifacts) > 0:
@@ -912,7 +913,9 @@ def calculate_qc(input_main, wid_auto=None,
                         elif isinstance(results_dict[test].errmsg, str):
                             errmsgs.append(results_dict[test].errmsg)
 
-                    input_main.results[test] = asdict(results_dict[test])
+                    #input_main.results[test] = asdict(results_dict[test])
+                    input_main.results[test] = results_dict[test].__dict__
+                    # __dict__ a lot faster than asdict e.g. for CDMAM results
 
             # For test DCM
             if any(read_tags) and 'DCM' in flattened_marked and cancelled is False:
@@ -980,7 +983,8 @@ def calculate_qc(input_main, wid_auto=None,
             widget = input_main.stack_test_tabs.currentWidget()
             widget.setCurrentIndex(idx_set_test)
             input_main.current_test = set_current_test
-            input_main.refresh_results_display()
+            if input_main.current_test != 'CDM':
+                input_main.refresh_results_display()
             # refresh image display if result contain rois to display
             if input_main.current_modality == 'CT':
                 if 'MTF' in input_main.results and paramset.mtf_type == 2:
@@ -1018,6 +1022,7 @@ def calculate_qc(input_main, wid_auto=None,
                     input_main.tab_mammo.cdm_cbox_thickness.addItems(items)
                     input_main.tab_mammo.cdm_cbox_diameter.setCurrentIndex(col)
                     input_main.tab_mammo.cdm_cbox_thickness.setCurrentIndex(row)
+                    input_main.refresh_results_display()
                 except:  # if cancelled
                     input_main.results['CDM'] = None
             try:
@@ -1406,7 +1411,7 @@ def calculate_2d(image2d, roi_array, image_info, modality,
                     res = Results(
                         headers=headers, values=values,
                         headers_sup=headers_sup, values_sup=values_sup,
-                        details_dict=details)
+                        details_dict=details, alternative=alt)
         elif flatfield_aapm:
             if image2d is not None:
                 details = calculate_flatfield_aapm(
@@ -1432,7 +1437,7 @@ def calculate_2d(image2d, roi_array, image_info, modality,
 
                     res = Results(
                         headers=headers, values=values,
-                        details_dict=details)
+                        details_dict=details, alternative=alt)
 
         if res is None:
             res = Results(headers=headers, values=values,
@@ -2200,7 +2205,6 @@ def calculate_3d(matrix, marked_3d, input_main, extra_taglists):
         """Read CDMAM for multiple images."""
         headers = copy.deepcopy(HEADERS[modality][test_code]['alt0'])
         #headers_sup = copy.deepcopy(HEADERS_SUP[modality][test_code]['altAll'])
-
         if len(images_to_test) == 0:
             res = Results(headers=headers)
         else:
@@ -2216,7 +2220,7 @@ def calculate_3d(matrix, marked_3d, input_main, extra_taglists):
             for i, idx in enumerate(images_to_test):
                 try:
                     input_main.progress_modal.setLabelText(
-                        f'Finding cell positions image {i}/{n_imgs}')
+                        f'Finding cell positions in image {i}/{n_imgs}')
                     curr_progress_value = round(30 * i/n_imgs)
                     input_main.progress_modal.setValue(
                          curr_progress_value)
@@ -2229,6 +2233,9 @@ def calculate_3d(matrix, marked_3d, input_main, extra_taglists):
                     roi_dict, err_this = get_rois(image, idx, input_main)
                     if err_this:
                         errmsg.append(f'\tImage {idx}: {errmsg}')
+                    elif roi_dict is None:
+                        msg = 'Failed reading cell positions. Image ignored.'
+                        errmsg.append(f'\tImage {idx}: {msg}')
                     if roi_dict is not None:
                         phantom = 34 if 'include_array' in roi_dict else 40
                         if prev_phantom == 0:
@@ -2271,7 +2278,7 @@ def calculate_3d(matrix, marked_3d, input_main, extra_taglists):
                     try:
                         input_main.progress_modal.setLabelText(
                             f'Finding discs of image {i}/{n_imgs}')
-                        curr_progress_value = 40 + round(60 * i/n_imgs)
+                        curr_progress_value = 35 + round(60 * i/n_imgs)
                         input_main.progress_modal.setValue(
                              curr_progress_value)
                     except AttributeError:
@@ -2291,6 +2298,12 @@ def calculate_3d(matrix, marked_3d, input_main, extra_taglists):
                         pass
 
             if cancelled is False:
+                try:
+                    input_main.progress_modal.setLabelText(
+                        'Finishing calculations...')
+                    input_main.progress_modal.setValue(95)
+                except AttributeError:
+                    pass
                 if 'include_array' in roi_dict:
                     include_array = roi_dict['include_array']
                 else:
@@ -2322,6 +2335,10 @@ def calculate_3d(matrix, marked_3d, input_main, extra_taglists):
             else:
                 res = Results(headers=headers, values=[[None]*4],
                               errmsg=errmsgs)
+            try:
+                input_main.progress_modal.setValue(98)
+            except AttributeError:
+                pass
 
         return res
 

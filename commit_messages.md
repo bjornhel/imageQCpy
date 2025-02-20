@@ -1,5 +1,42 @@
+# v3.1.11
+_Feb 19, 2025_
+
+Changes to the CDMAM test:
+- Speed up on calculations and roi display
+- Different image orientations now possible and verified.
+- Center reading option "Multiply center/corner detection matrix" removed (regarded as not reasonable option). Minimum center/corner detection matrix set to default.
+
+Changes to Generate report:
+- Added option to duplicate report elements
+- Fixed error when selecting image number 0 for result_plot/result_image
+
+Fixes:
+- Fixed 'cannot remove Artist' error from v3.1.10
+
+# v3.1.10
+_Feb 12, 2025_
+
+Changes:
+- Generate report: Added option to include/exclude image name for plot/image. Image name now centered on plot/image
+- Xray Homogeneity: Added more explanation to the result table content in the information dialogue.
+- CDMAM: v4.0 - cropped cells 4pix=200um from cell-grid (border) to avoid that border pixel-values affecting result
+
+Fixes:
+- Annotations lagging for matplotlib 3.10 now fixed
+
+
+# v3.1.9
+_Feb 10, 2025_
+
+Changes:
+- Mammo - CDMAM: small fixes (less nan in result table by allowing for extrapolation) and adjusting progress-bar
+- Generate report: Fixes to confusing behaviour single vs all images/results. Apologies if established templates need adjustments. 
+
+Bugfixes:
+- Xray/Mammo - Homogeneity: fixed error when generating QuickTest results (automation output and export to clipboard)
+
 # v3.1.8
-_Feb 05, 2026_
+_Feb 05, 2025_
 
 Changes:
 - CDMAM:

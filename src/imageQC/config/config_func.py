@@ -388,6 +388,13 @@ def verify_input_dict(dict_input, default_object):
         if 'relative_mass_density' in [*dict_input]:
             updated_dict['linearity_axis'] = dict_input['relative_mass_density']
             updated_dict['linearity_unit'] = 'Rel. mass density'
+    elif default_object == cfc.ReportElement():
+        if 'result_pr_image' in [*dict_input]:  # changed in v3.1.9
+            if dict_input['variant'] == 'image':
+                updated_dict['all_images'] = not dict_input['result_pr_image']
+            else:
+                updated_dict['all_images'] = dict_input['result_pr_image']
+            updated_dict['image_number'] = dict_input['result_from_image']
 
     return updated_dict
 
@@ -722,6 +729,10 @@ def load_paramsets(fnames, path):
                             upd = verify_input_dict(doc['gho_table'],
                                                     cfc.PositionTable())
                             doc['gho_table'] = cfc.PositionTable(**upd)
+                            if 'cdm_center_disc_option' in doc:
+                                if doc['cdm_center_disc_option'] == 3:
+                                    doc['cdm_center_disc_option'] = 2
+                                    # opt 3 removed
                         elif modality == 'PET':
                             if 'rec_table' in doc:
                                 upd = verify_input_dict(
