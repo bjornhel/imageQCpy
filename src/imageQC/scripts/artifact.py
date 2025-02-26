@@ -344,7 +344,7 @@ def apply_artifacts(image, image_info, artifacts, artifacts_3d, image_number):
                                 roi_array = ndimage.rotate(
                                     roi_array.astype(float), -artifact.rotation,
                                     reshape=False)
-                                roi_array = np.round(roi_array)
+                            roi_array = np.round(roi_array)
                 elif artifact.type_3d:
                     labels = [art_3d[0] for art_3d in artifacts_3d]
                     idx = labels.index(artifact.label)
@@ -369,6 +369,7 @@ def apply_artifacts(image, image_info, artifacts, artifacts_3d, image_number):
                                     image.shape,
                                     center_dx=off_xy[0], center_dy=off_xy[1])
                                 dist_map_mm = image_info.pix[0] * dist_map_pix
+                                #artifact sigma == source distance
                                 arr = mmcalc.point_source_func(
                                     dist_map_mm, 1., artifact.sigma)
                                 artifact_array = artifact_array * arr/np.max(arr)
