@@ -2075,7 +2075,6 @@ def calculate_2d(image2d, roi_array, image_info, modality,
                         f'Center pixel (after scaling) = {res["center_pixel_count"]} '
                         '< 10000 (minimum set by NEMA)')
             '''
-
             res = Results(
                 headers=headers, values=values,
                 headers_sup=headers_sup, values_sup=values_sup,
@@ -2157,7 +2156,7 @@ def calculate_2d(image2d, roi_array, image_info, modality,
 
     try:
         result = locals()[test_code]()
-    except (KeyError, IndexError):
+    except (KeyError, IndexError, TypeError):
         result = None
 
     return result
